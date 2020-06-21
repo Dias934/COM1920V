@@ -1,0 +1,1 @@
+A pasta Utils contém funções que são usadas para 2 ou mais grupos
