@@ -22,7 +22,7 @@ function varargout = SCD_Simulator(varargin)
 
 % Edit the above text to modify the response to help SCD_Simulator
 
-% Last Modified by GUIDE v2.5 21-Jun-2020 03:59:32
+% Last Modified by GUIDE v2.5 23-Jun-2020 15:00:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -188,7 +188,7 @@ handles.output.UserData.tBit=tBit;
 handles.output.UserData.NAmostras=NAm;
 cod_linha=handles.nrzBE.Value + handles.nrzUE.Value*2; %cod_linha= 0 ou 1 ou 2
 
-[data, time]=Em_Codigo_Linha(cod_linha, RxFile, ampCL, NAm, tBit);
+[data, time, EnSin]=Em_Codigo_Linha(cod_linha, RxFile, ampCL, NAm, tBit);
 handles.output.UserData.Em_CodLin=data;
 handles.output.UserData.Time_Vect=time;
 
@@ -198,20 +198,17 @@ modDig=handles.OOK.Value + handles.FSK.Value*2; %modDig= 0 ou 1 ou 2
 ampMD=str2double(handles.AmpMD.String);
 freqH=str2double(handles.FreqH.String);
 freqL=str2double(handles.FreqL.String);
-data=Em_Mod_Dig(modDig, data, ampCL, ampMD, tBit, freqH, freqL, NAm);
+[data, EnSin]=Em_Mod_Dig(modDig, data, ampCL, ampMD, tBit, freqH, freqL, NAm, EnSin);
 handles.output.UserData.Em_ModDig=data;
 
 %Valores da BER, simulação da BER e transmissão da mensagem
-powBER=str2double(handles.PowBER.String);
-valBER=str2double(handles.ValBER.String);
-%RxFile=ber_simulation(RxFile, powBER, valBER);
+aten=str2double(handles.Aten.String);
+SNR=str2double(handles.SNR.String);
+data=canal_fisico(EnSin, SNR, data, aten, NAm);
 
-%Apresentação do valor de BER
-BerVal=valBER*10^powBER;
-handles.BERTrans.String=strcat("BER da transmissão = ",num2str(BerVal));
 
 handles.output.UserData.Rec_ModDig=data;
-data=Re_Mod_Dig(modDig, cod_linha, data, ampCL, NAm);
+data=Re_Mod_Dig(modDig, cod_linha, data, freqH, ampMD, ampCL, NAm, tBit);
 
 
 handles.output.UserData.Rec_CodLin=data;
@@ -536,6 +533,7 @@ function EmButModDig_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 plot(handles.output.UserData.Time_Vect, handles.output.UserData.Em_ModDig);
+handles.histogramAxes.YLim=[handles.histogramAxes.YLim(1)-1 handles.histogramAxes.YLim(2)+1];
 handles.checkPortion.Enable='On';
 set(handles.slider, 'Enable', 'On');
 handles.output.UserData.XAxisLim=handles.histogramAxes.XLim;
@@ -551,6 +549,7 @@ function RecButModDig_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 plot(handles.output.UserData.Time_Vect, handles.output.UserData.Rec_ModDig);
+handles.histogramAxes.YLim=[handles.histogramAxes.YLim(1)-1 handles.histogramAxes.YLim(2)+1];
 handles.checkPortion.Enable='On';
 set(handles.slider, 'Enable', 'On');
 handles.output.UserData.XAxisLim=handles.histogramAxes.XLim;
@@ -566,6 +565,7 @@ function EmButCodLin_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 plot(handles.output.UserData.Time_Vect, handles.output.UserData.Em_CodLin);
+handles.histogramAxes.YLim=[handles.histogramAxes.YLim(1)-1 handles.histogramAxes.YLim(2)+1];
 handles.checkPortion.Enable='On';
 set(handles.slider, 'Enable', 'On');
 handles.output.UserData.XAxisLim=handles.histogramAxes.XLim;
@@ -584,6 +584,7 @@ function RecButCodLin_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 plot(handles.output.UserData.Time_Vect, handles.output.UserData.Rec_CodLin);
+handles.histogramAxes.YLim=[handles.histogramAxes.YLim(1)-1 handles.histogramAxes.YLim(2)+1];
 handles.checkPortion.Enable='On';
 set(handles.slider, 'Enable', 'On');
 handles.output.UserData.XAxisLim=handles.histogramAxes.XLim;
@@ -625,6 +626,7 @@ function FSK_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of FSK
 handles.FreqL.Enable='On';
+handles.BBER.Enable='Off';
 
 
 % --- Executes on button press in OOK.
@@ -635,6 +637,7 @@ function OOK_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of OOK
 handles.FreqL.Enable='Off';
+handles.BBER.Enable='On';
 
 
 % --- Executes on button press in AusModDig.
@@ -645,3 +648,57 @@ function AusModDig_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of AusModDig
 handles.FreqL.Enable='Off';
+handles.BBER.Enable='Off';
+
+
+
+function Aten_Callback(hObject, eventdata, handles)
+% hObject    handle to Aten (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Aten as text
+%        str2double(get(hObject,'String')) returns contents of Aten as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function Aten_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Aten (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function SNR_Callback(hObject, eventdata, handles)
+% hObject    handle to SNR (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of SNR as text
+%        str2double(get(hObject,'String')) returns contents of SNR as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function SNR_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to SNR (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in BBER.
+function BBER_Callback(hObject, eventdata, handles)
+% hObject    handle to BBER (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
