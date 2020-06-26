@@ -211,22 +211,20 @@ if(handles.output.UserData.Trans_Type ~= cod_linha + 4*modDig+4)
     handles.output.UserData.Trans_SNR=[];
 end
 
+handles.output.UserData.Trans_Type=0;
 aten=str2double(handles.Aten.String);
 SNR=str2double(handles.SNR.String);
 data=canal_fisico(EnSin, SNR, data, aten);
-handles.output.UserData.Trans_SNR=[handles.output.UserData.Trans_SNR SNR];
+
 
 handles.output.UserData.Rec_ModDig=data;
 data=Re_Mod_Dig(modDig, cod_linha, data, freqH, ampMD, ampCL, NAm, tBit);
 
 
 handles.output.UserData.Rec_CodLin=data;
-emit_file=RxFile;
-RxFile=Re_Codigo_Linha(cod_linha, emit_file, data, ampCL, NAm);
+RxFile=Re_Codigo_Linha(cod_linha, RxFile, data, ampCL, NAm);
 
-handles.output.UserData.Trans_BER= calculate_transmition_BER(emit_file, ...
-                                                             RxFile,...
-                                        handles.output.UserData.Trans_BER);
+[T_]
 
 
 %Descodificação Canal
@@ -252,7 +250,6 @@ set(handles.EmButCodLin, 'Enable', 'On');
 set(handles.RecButCodLin, 'Enable', 'On');
 set(handles.EmButModDig, 'Enable', 'On');
 set(handles.RecButModDig, 'Enable', 'On');
-handles.BBER.Enable='On';
 
 
 
@@ -262,7 +259,6 @@ function abrirFileRX_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.output.UserData.HistFilename=handles.output.UserData.RxFile;
-
 
 
 % --- Executes on button press in ficheirobtn.
@@ -642,7 +638,7 @@ function FSK_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of FSK
 handles.FreqL.Enable='On';
-
+handles.BBER.Enable='Off';
 
 
 % --- Executes on button press in OOK.
@@ -653,7 +649,7 @@ function OOK_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of OOK
 handles.FreqL.Enable='Off';
-
+handles.BBER.Enable='On';
 
 
 % --- Executes on button press in AusModDig.
@@ -664,7 +660,7 @@ function AusModDig_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of AusModDig
 handles.FreqL.Enable='Off';
-
+handles.BBER.Enable='Off';
 
 
 
@@ -718,6 +714,3 @@ function BBER_Callback(hObject, eventdata, handles)
 % hObject    handle to BBER (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.checkPortion.Enable='Off';
-set(handles.slider, 'Enable', 'Off');
-plot(handles.output.UserData.Trans_SNR, handles.output.UserData.Trans_BER);

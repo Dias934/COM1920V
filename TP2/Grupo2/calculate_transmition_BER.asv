@@ -1,0 +1,14 @@
+function [T_BER] = calculate_transmition_BER(emit_file, recv_file, BER_vect)
+    vect=file2vector(emit_file);
+    bin_emit=de2bi(vect,8)';
+    vect=file2vector(recv_file);
+    bin_recv=de2bi(vect,8)';
+    count=0;
+    for i=1:numel(bin_recv)
+        if(bin_emit(i)~=bin_recv(i))
+            count=count+1;
+        end
+    end
+    BER
+end
+
