@@ -1,7 +1,7 @@
 function [fileRes] = Re_Aus(filename, data, amp, NAm)
     recv=zeros(8,1);
     idx=1;
-    for i=1:NAm:numel(data)
+    for i=1:NAm:numel(data)-NAm
         if(idx>numel(recv))
             if((numel(data)-i)/NAm<8)
                 break;

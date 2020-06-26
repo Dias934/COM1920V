@@ -204,7 +204,7 @@ handles.output.UserData.Em_ModDig=data;
 %Valores da BER, simulação da BER e transmissão da mensagem
 aten=str2double(handles.Aten.String);
 SNR=str2double(handles.SNR.String);
-data=canal_fisico(EnSin, SNR, data, aten, NAm);
+data=canal_fisico(EnSin, SNR, data, aten);
 
 
 handles.output.UserData.Rec_ModDig=data;
